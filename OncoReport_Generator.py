@@ -315,9 +315,9 @@ STEP2_SYSTEM_PROMPT = """你是肿瘤专项指标解读专家。你的任务是�
 
 输出格式示例：
 {
-  "MRD": {
+  "指标名": {
     "summary": "结论性解读，约150字以内",
-    "key_values": {"MRD状态": "阳性", "VAF": "0.05%", "采样时间点": "术后4周"},
+    "key_values": {"关键字段名": "从原文提取的对应数值"},
     "clinical_significance": "临床意义说明",
     "confidence": "high",
     "source_quote": "引用原文，用于溯源，禁止编造数值"
