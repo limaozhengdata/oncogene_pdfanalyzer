@@ -240,8 +240,8 @@ STEP1_SYSTEM_PROMPT = """你是肿瘤检测报告审阅助手。你的任务是�
 
 输出格式示例：
 {
-  "MRD": {"is_report_type": "yes", "status": "已出结果", "evidence": "报告摘要页：MRD检测结果为阳性..."},
-  "PDL1": {"is_report_type": "no", "status": "仅病史提及", "evidence": "既往病理提及PD-L1阴性，非本次检测项目"}
+  "指标名": {"is_report_type": "yes 或 no", "status": "细化状态", "evidence": "引用原文关键片段，便于人工复核"},
+  "指标名": {"is_report_type": "yes 或 no", "status": "细化状态", "evidence": "引用原文关键片段，便于人工复核"}
 }
 
 字段说明：
