@@ -14,9 +14,8 @@ import paramiko
 import pandas as pd
 from io import BytesIO
 from openai import OpenAI
-
-import ObsUploadPDF
 from tool.mysql import Mysql
+from dotenv import load_dotenv
 from ObsUploadPDF import upload_pdf
 
 
@@ -39,22 +38,46 @@ def mut_regular(mut):
     """
     使用大模型规范化基因突变信息
     """
+    load_dotenv()
     start_time = time.time()
     client = OpenAI(
-        # api_key="sk-c9033ccf97e74cf99d58d4f04b2d42c1",
-        # base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        api_key="sk-ws-H.ERYEELI.YkPJ.MEUCID42GiXlekxWWZl6lyOnoZHtk6dl9bYQJndTHenjl8m1AiEA_jpiLZYUyUKC41jGgmkzj8VjjIywcbOSP3wpurwFZwM",
-        base_url="https://llm-ajfzamzw7t6tpadu.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+        api_key=os.getenv('OPENAI_API_KEY'),
+        base_url=os.getenv('OPENAI_BASE_URL'),
     )
+    # SYSTEM_PROMPT = """你是一个专业的基因突变标准化助手。你的任务是将用户输入的基因突变信息提取并转换为标准格式。
+    # 请严格遵循以下标准化规则进行转换，并**排除非基因名（如染色体区域、染色体号、位置区间等）**的项目。
+    # 请遵循以下规则：
+    # 1. SNV突变格式：基因名-p.具体突变 (例如：KRAS:p.G12C)
+    # 2. CNV变异格式：基因名-变异类型(gain/loss) (例如：ERBB2:gain)
+    # 3. 基因融合格式：基因A-基因B (例如：BCR::ABL1)
+    #
+    # 示例转换：
+    # - kras G12C → KRAS:p.G12C:NM号:SOM
+    # - ERBB2扩增/缺失 → ERBB2:gain/loss
+    # - ALK融合 → .::ALK
+    # - RET融合 → .::RET
+    # - BRAF-ALK → BRAF::ALK
+    #
+    # 请以JSON格式返回结果，格式如下：
+    # {
+    #   "snv": ["基因名:p.具体突变", ...],
+    #   "fus": ["基因A::基因B", ".::基因A", ...],
+    #   "cnv": ["基因名:变异类型", ...]
+    # }
+    # 只返回JSON格式的结果，不需要其他解释。"""
+
     SYSTEM_PROMPT = """你是一个专业的基因突变标准化助手。你的任务是将用户输入的基因突变信息提取并转换为标准格式。
     请严格遵循以下标准化规则进行转换，并**排除非基因名（如染色体区域、染色体号、位置区间等）**的项目。
     请遵循以下规则：
-    1. SNV突变格式：基因名-p.具体突变 (例如：KRAS:p.G12C)
+    1. SNV突变格式：
+        - 优先使用蛋白p.具体突变，格式：基因名:p.具体突变 (例如：KRAS:p.G12C)
+        - 当报告无p.氨基酸注释（p列为`.`/空，多为剪接、内含子变异），直接使用c.水平命名，格式：基因名:c.具体突变 (例如：APC:c.834+1G>A)
     2. CNV变异格式：基因名-变异类型(gain/loss) (例如：ERBB2:gain)
     3. 基因融合格式：基因A-基因B (例如：BCR::ABL1)
 
     示例转换：
-    - kras G12C → KRAS:p.G12C:NM号:SOM
+    - kras G12C → KRAS:p.G12C
+    - APC c.834+1G>A 无p注释 → APC:c.834+1G>A
     - ERBB2扩增/缺失 → ERBB2:gain/loss
     - ALK融合 → .::ALK
     - RET融合 → .::RET
@@ -62,12 +85,11 @@ def mut_regular(mut):
 
     请以JSON格式返回结果，格式如下：
     {
-      "snv": ["基因名:p.具体突变", ...],
+      "snv": ["基因名:p.具体突变", "基因名:c.具体突变", ...],
       "fus": ["基因A::基因B", ".::基因A", ...],
       "cnv": ["基因名:变异类型", ...]
     }
     只返回JSON格式的结果，不需要其他解释。"""
-
     USER_PROMPT = f"""请将以下文本中患者检测到的基因变异转换为标准格式：
     mut: {mut}"""
 
@@ -108,6 +130,7 @@ def create_remote_folder_and_json(json_data, folder):
     password = "HS#&79074!@"  # 或使用密钥认证
     remote_path = f"/home/meddb/machao_tf/meta_sample_path/test_sample/{folder}"  # 远程路径
     remote_json_path = f"{remote_path}/{folder}_all_mut.json"
+    sftp = None
     try:
         # 1. 创建 SSH 连接
         ssh = paramiko.SSHClient()
@@ -171,7 +194,7 @@ def execute_remote_commands(folder, cancer):
         full_command = " && ".join(commands)
 
         # 4. 执行命令（添加环境变量和正确的shell）
-        stdin, stdout, stderr = ssh.exec_command(f"bash -lc '{full_command}'", get_pty=True)
+        stdin, stdout, stderr = ssh.exec_command(f"bash -lc '{full_command}'")
 
         # 5. 等待命令执行完成
         exit_status = stdout.channel.recv_exit_status()
@@ -229,8 +252,10 @@ def add_nm_annotation(mutations, mysql):
     return new_row
 
 
-def format_show(sampleid, result, mysql):
+def format_show(sampleid, result):
     dct = {}
+    DB_CONF_FILE = 'conf/db.smartonco_4.conf'
+    mysql = Mysql(db_conf_file=DB_CONF_FILE)
     db = 'smartoncointerpretation_v2'
     if len(result['cnv']) > 0:
         cnv_sql = f'SELECT genesymbol,cnv_result AS variation,drug_ch,relateddisease,drugefficacy FROM {db}.`cnv_drug` where sampleid="{sampleid}" '
@@ -278,15 +303,15 @@ def process_pdf_file(filename, sampleid, cancer):
         # 5.添加变异NM注释
         result['snv'] = add_nm_annotation(result.get('snv', []), mysql)
         print("NM标准化后：", result)
-        # 6.创建远程json文件
-        create_remote_folder_and_json(result, sampleid)
-        # 7.执行ctdna程序
-        execute_remote_commands(sampleid, cancer)
-        # 8.封装数据
-        dct = format_show(sampleid, result, mysql)
-        print('所有流程全部运行完成！')
-        print(f'程序总耗时: {round(time.time() - start_time, 2)}秒')
-        return dct
+        # # 6.创建远程json文件
+        # create_remote_folder_and_json(result, sampleid)
+        # # 7.执行ctdna程序
+        # execute_remote_commands(sampleid, cancer)
+        # # 8.封装数据
+        # dct = format_show(sampleid, result)
+        # print('所有流程全部运行完成！')
+        # print(f'程序总耗时: {round(time.time() - start_time, 2)}秒')
+        # return dct
 
     except FileNotFoundError:
         print(f"错误：文件 {filename} 不存在于 {UPLOAD_DIR}")
@@ -300,8 +325,8 @@ def process_pdf_file(filename, sampleid, cancer):
 
 
 if __name__ == '__main__':
-    filename = '6012340402-陈金根-2026-08-04 16_45_03 (3).pdf'  #
-    sampleid = 'S2600015708'
+    filename = '未命名1_加水印.pdf'  #
+    sampleid = 'S2600015708'   # S2600015708
     cancer = "肠癌"
     # 处理PDF
     result = process_pdf_file(filename, sampleid, cancer)

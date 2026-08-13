@@ -6,3 +6,5 @@ venv/
 *.log
 *.conf.local
 conf/db.*.conf
+.env
+json/

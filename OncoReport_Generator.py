@@ -42,14 +42,112 @@ INDICATOR_CONFIG = {
         "key_fields": ["IHC结果", "FISH结果", "基因拷贝数"],
         "priority": "high",
     },
+    "BRAF_V600E": {
+        "aliases": ["BRAF", "BRAF V600E", "BRAF exon15 V600E", "BRAF突变"],
+        "description": "甲状腺癌、黑色素瘤等肿瘤核心驱动基因，提示肿瘤侵袭风险，指导BRAF靶向药选用",
+        "key_fields": ["检测结果", "检测技术", "变异位点", "肿瘤类型"],
+        "priority": "high",
+    },
+    "BRCA": {
+        "aliases": ["BRCA", "BRCA1", "BRCA2", "BRCA1/2", "BRCA基因突变"],
+        "description": "遗传性乳腺癌、卵巢癌核心易感基因，用于肿瘤遗传风险评估，指导PARP抑制剂靶向用药",
+        "key_fields": ["变异位点", "氨基酸变异", "突变功能", "ACMG临床意义分类", "合子类型"],
+        "priority": "high",
+    },
+    "CLDN18_2": {
+        "aliases": ["Claudin18.2", "CLDN18.2", "claudin 18.2"],
+        "description": "胃癌、胃食管结合部腺癌特异性靶点蛋白，IHC检测表达水平指导Claudin18.2单抗等靶向药物使用",
+        "key_fields": ["IHC染色强度", "阳性细胞占比", "检测方法", "样本质控结果"],
+        "priority": "high",
+    },
+    "DPYD": {
+            "aliases": ["DPYD", "DPD基因", "二氢嘧啶脱氢酶基因"],
+            "description": "氟嘧啶类化疗药（5-FU、卡培他滨）安全用药核心代谢基因，评估DPD酶活性，预测严重骨髓抑制、腹泻等药物毒性风险，指导化疗剂量调整",
+            "key_fields": ["检测rs位点", "基因型结果", "Activity Score(AS)", "代谢表型", "剂量调整建议"],
+            "priority": "high",
+    },
+    "EGFR": {
+    "aliases": ["EGFR", "表皮生长因子受体", "EGFR突变", "EGFR 5位点", "EGFR超高灵敏度检测"],
+    "description": "非小细胞肺癌核心驱动基因，检测19del、L858R、T790M、G719S、L861Q等热点突变，预判一/二/三代EGFR-TKI靶向药敏感性与耐药情况，液体/组织dPCR高灵敏检测可用于血浆微量突变监测",
+    "key_fields": ["外显子变异位点", "突变拷贝数", "VAF", "检测方法(dPCR/NGS)", "对应靶向药物", "证据等级", "肿瘤分型"],
+    "priority": "high",
+    },
+    "FRα": {
+        "aliases": ["FRα", "叶酸受体α", "叶酸受体Alpha"],
+        "description": "卵巢高级别浆液性癌等肿瘤靶向标志物，采用IHC检测各强度阳性细胞占比，指导叶酸受体靶向药物使用",
+        "key_fields": ["IHC各分级阳性比例", "肿瘤细胞含量", "检测方法", "镜下病理描述"],
+        "priority": "high",
+    },
+    "HRR_HRD": {
+        "aliases": ["HRR", "HRD", "同源重组修复", "同源重组缺陷", "HRR+HRD"],
+        "description": "卵巢癌、乳腺癌、前列腺癌等PARP抑制剂核心疗效标志物，包含HRR通路基因变异+HRD基因组不稳定评分（LOH/TAI/LST），评估铂类、PARP抑制剂获益及遗传性肿瘤风险",
+        "key_fields": ["HRR通路变异结果", "LOH分值", "TAI分值", "LST分值", "HRD总分", "HRD状态", "对应PARP药物证据等级"],
+        "priority": "high",
+    },
+    "KIT_PDGFRA": {
+        "aliases": ["KIT", "PDGFRA", "c-KIT", "胃肠间质瘤靶点", "KIT+PDGFRA"],
+        "description": "胃肠间质瘤(GIST)核心驱动基因，检测KIT exon9/11/13/17、PDGFRA exon12/14/18热点突变，指导伊马替尼、舒尼替尼、瑞派替尼等多靶点TKI用药及预后判断",
+        "key_fields": ["KIT各外显子突变结果", "PDGFRA各外显子突变结果", "突变氨基酸位点", "对应靶向药物", "证据等级"],
+        "priority": "high",
+    },
+    "LYNCH": {
+        "aliases": ["Lynch综合征", "林奇综合征", "HNPCC", "遗传性非息肉病性结直肠癌", "MMR错配修复基因"],
+        "description": "遗传性结直肠癌易感综合征，检测MLH1/MSH2/MSH6/PMS2/EPCAM错配修复胚系突变，评估结直肠、子宫内膜、胃、肝胆等多癌种遗传风险，制定定期筛查方案，指导免疫治疗用药选择",
+        "key_fields": ["检测基因", "核苷酸变异", "氨基酸变异", "杂合/纯合状态", "ACMG变异分级", "肿瘤风险提示", "筛查建议"],
+        "priority": "high",
+    },
+    "MMR_PROTEIN": {
+        "aliases": ["MMR蛋白", "错配修复蛋白", "MLH1 MSH2 MSH6 PMS2", "dMMR pMMR"],
+        "description": "免疫组化检测4种错配修复蛋白表达，判读dMMR/pMMR，预测PD-1/PD-L1免疫药物疗效、辅助筛查Lynch综合征",
+        "key_fields": ["MLH1表达", "MSH2表达", "MSH6表达", "PMS2表达", "最终分型(dMMR/pMMR)", "肿瘤细胞质控"],
+        "priority": "high",
+    },
+    "MSI": {
+        "aliases": ["MSI", "微卫星不稳定性", "MSI-H MSI-L MSS", "微卫星检测"],
+        "description": "荧光PCR毛细管电泳检测BAT25/BAT26/D2S123/D5S346/D17S250五个微卫星位点，分为MSI-H/MSI-L/MSS，用于结直肠癌预后、免疫用药指导、林奇初筛",
+        "key_fields": ["5个微卫星位点结果", "不稳定位点数量", "MSI分型", "用药提示", "遗传风险提示"],
+        "priority": "high",
+    },
+    "RAS_BRAF": {
+        "aliases": ["RAS家族", "KRAS NRAS BRAF", "结直肠癌RAS套餐", "RAS突变检测"],
+        "description": "结直肠癌核心用药标志物，检测KRAS exon2/3/4、NRAS exon2/3/4、BRAF V600热点突变，判断西妥昔/帕尼单抗耐药，指导化疗、抗血管、免疫及联合方案选择",
+        "key_fields": ["KRAS各外显子突变结果", "NRAS各外显子突变结果", "BRAF V600状态", "对应靶向/化疗药物", "证据等级", "结直肠癌用药分层"],
+        "priority": "high",
+    },
+    "RNA_FUSION": {
+        "aliases": ["RNA融合基因", "基因融合", "肉瘤融合套餐", "转录本融合检测"],
+        "description": "RNA捕获高通量测序检测4000+基因融合（EWSR1、ALK、ROS1、NTRK、FGFR等），用于肉瘤、肺癌等实体瘤分子分型，筛选拉罗替尼、克唑替尼等融合靶向药适用人群",
+        "key_fields": ["5'融合基因", "3'融合基因", "融合断点位置", "融合转录本", "对应靶向药物", "肿瘤分型提示"],
+        "priority": "high",
+    },
+    "ONCOTYPE21": {
+        "aliases": ["乳腺癌21基因", "Oncotype DX", "21基因复发风险评分", "RS评分"],
+        "description": "HR阳性HER2阴性早期乳腺癌预后多基因表达谱检测，检测增殖、激素、HER2等21个基因mRNA表达，计算复发分数(RS)，区分患者是否能从辅助化疗获益，指导内分泌±化疗方案选择",
+        "key_fields": ["21基因各CT值", "复发分数RS", "淋巴结状态", "绝经状态", "化疗获益提示", "临床分层建议"],
+        "priority": "high",
+    },
+    "HRD_SCORE": {
+        "aliases": ["HRD评分", "同源重组缺陷评分", "HRD检测（卵巢癌）", "LOH TAI LST综合评分"],
+        "description": "肿瘤基因组层面HRD定量检测，通过LOH、TAI、LST三项指标计算HRDscore（阈值42），单独或联合HRR突变判断卵巢/乳腺肿瘤对PARP抑制剂、铂类化疗敏感性，指导维持治疗方案",
+        "key_fields": ["LOH分值", "TAI分值", "LST分值", "HRD总分", "HRD阳性判定标准", "PARP抑制剂用药提示", "铂类获益提示"],
+        "priority": "high",
+    },
+    "UGT1A1_IRINOTECAN": {
+        "aliases": ["伊立替康用药评估", "UGT1A1基因检测", "伊立替康毒性筛查", "UGT1A1*6 *28位点"],
+        "description": "结直肠癌、胃癌、肺癌伊立替康化疗安全用药标志物，检测UGT1A1 rs4148323(*6)、rs3064744(*28)关键多态位点，评估SN-38代谢能力，预测迟发性腹泻、中性粒细胞减少等重度毒副作用，指导剂量调整",
+        "key_fields": ["UGT1A1 rs位点基因型", "TA重复数", "酶活性判断", "毒副作用风险等级", "化疗剂量建议", "PharmGKB证据等级"],
+        "priority": "high",
+    }
 }
 
 # ============================================================
 # 二、模型与文本提取参数
 # ============================================================
+from dotenv import load_dotenv
 
-API_KEY = "sk-c9033ccf97e74cf99d58d4f04b2d42c1"
-BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+load_dotenv()
+API_KEY = os.getenv('OPENAI_API_KEY')
+BASE_URL = os.getenv('OPENAI_BASE_URL')
 # 第一步是分类任务，可用轻量/低成本模型；第二步是生成任务，建议用能力更强的模型
 STEP1_MODEL = "deepseek-v4-flash"
 STEP2_MODEL = "deepseek-v4-flash"
@@ -476,6 +574,12 @@ def generate_report(filename):
 
     # 4. 第二步：批量解读
     step2_result = interpret_indicators(key_text, yes_indicators)
+    # 保存为 JSON 文件
+    os.makedirs('json', exist_ok=True)
+    name = filename.replace('.pdf', '')
+    with open(f'json/{name}.json', 'w', encoding='utf-8') as f:
+        json.dump(step2_result, f, ensure_ascii=False, indent=4)
+    print(f"JSON已保存到{name}.json")
 
     # 5. 渲染
     report = render_report(step1_result, step2_result)
@@ -490,7 +594,7 @@ def generate_report(filename):
 
 
 if __name__ == '__main__':
-    pdf_file = 'Lynch综合征风险评估（健康人）.pdf'
+    pdf_file = 'BRCA1+BRCA2基因检测（卵巢癌）.pdf'
     report_text, structured_result = generate_report(pdf_file)
     print(report_text)
     print(structured_result)
