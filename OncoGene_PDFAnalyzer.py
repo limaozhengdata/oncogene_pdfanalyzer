@@ -7,6 +7,7 @@
 """
 import os
 import re
+import sys
 import json
 import time
 import requests
@@ -258,22 +259,22 @@ def format_show(sampleid, result):
     mysql = Mysql(db_conf_file=DB_CONF_FILE)
     db = 'smartoncointerpretation_v2'
     if len(result['cnv']) > 0:
-        cnv_sql = f'SELECT genesymbol,cnv_result AS variation,drug_ch,relateddisease,drugefficacy FROM {db}.`cnv_drug` where sampleid="{sampleid}" '
+        cnv_sql = f'SELECT genesymbol,cnv_result AS variation,drug_ch,relateddisease,drugefficacy,vaf,drug_en,drugefficacysummary,reference,drugevidencelevel,Evidence_level,clinical_type,current_tumor,level_grade1,level_grade2 FROM {db}.`cnv_drug` where sampleid="{sampleid}" '
         cnv_df = mysql.fetch_all(cnv_sql)
         dct['cnv_res'] = cnv_df
     if len(result['snv']) > 0:
-        snv_sql = f'SELECT genesymbol,CASE WHEN phgvs != "NA" THEN phgvs WHEN chgvs != "NA" THEN chgvs ELSE "/" END AS variation,relateddisease,drug_ch,drugefficacy FROM {db}.`snv_drug` where sampleid="{sampleid}" '
+        snv_sql = f'SELECT genesymbol,CASE WHEN phgvs != "NA" THEN phgvs WHEN chgvs != "NA" THEN chgvs ELSE "/" END AS variation,relateddisease,drug_ch,drugefficacy,vaf,drug_en,drugefficacysummary,reference,drugevidencelevel,Evidence_level,clinical_type,current_tumor,level_grade1,level_grade2 FROM {db}.`snv_drug` where sampleid="{sampleid}" '
         snv_df = mysql.fetch_all(snv_sql)
         dct['snv_res'] = snv_df
     if len(result['fus']) > 0:
-        fus_sql = f'SELECT genesymbol,CONCAT(fivetailgenesymbol, "-", threetailgenesymbol) AS variation,relateddisease,drug_ch,drugefficacy FROM {db}.`fus_drug` where sampleid="{sampleid}" '
+        fus_sql = f'SELECT genesymbol,CONCAT(fivetailgenesymbol, "-", threetailgenesymbol) AS variation,relateddisease,drug_ch,drugefficacy,vaf,drug_en,drugefficacysummary,fusdrug_reference as reference,drugevidencelevel,Evidence_level,clinical_type,current_tumor,level_grade1,level_grade2 FROM {db}.`fus_drug` where sampleid="{sampleid}" '
         fus_df = mysql.fetch_all(fus_sql)
         dct['fus_res'] = fus_df
     print(dct)
     return dct
 
 
-def process_pdf_file(filename, sampleid, cancer):
+def process_pdf_file(OBS_OBJECT_KEY, sampleid, cancer):
     UPLOAD_DIR = "/home/node9/xg/pdf_parse/uploads"
     DB_CONF_FILE = 'conf/db.smartonco_4.conf'
     mysql = Mysql(db_conf_file=DB_CONF_FILE)
@@ -281,9 +282,12 @@ def process_pdf_file(filename, sampleid, cancer):
     try:
         start_time = time.time()
         # 1. 构建文件路径
+        filename = OBS_OBJECT_KEY.split('/')[-1]
         file_path = os.path.join(UPLOAD_DIR, filename)
         if not os.path.exists(file_path):
-            upload_pdf(filename)
+            print('node9没有pdf文件，正在下载……')
+            upload_pdf(OBS_OBJECT_KEY)
+            print('下载成功！')
         print(f"处理文件: {file_path}")
         # 2.解析pdf文件
         textdata = extract_pdf(file_path, filename, MAX_LEN)
@@ -303,19 +307,22 @@ def process_pdf_file(filename, sampleid, cancer):
         # 5.添加变异NM注释
         result['snv'] = add_nm_annotation(result.get('snv', []), mysql)
         print("NM标准化后：", result)
-        # # 6.创建远程json文件
-        # create_remote_folder_and_json(result, sampleid)
-        # # 7.执行ctdna程序
-        # execute_remote_commands(sampleid, cancer)
-        # # 8.封装数据
-        # dct = format_show(sampleid, result)
-        # print('所有流程全部运行完成！')
-        # print(f'程序总耗时: {round(time.time() - start_time, 2)}秒')
-        # return dct
+        # 6.创建远程json文件
+        create_remote_folder_and_json(result, sampleid)
+        # 7.执行ctdna程序
+        execute_remote_commands(sampleid, cancer)
+        # 8.封装数据
+        dct = format_show(sampleid, result)
+        os.makedirs('json', exist_ok=True)
+        name = filename.replace('.pdf', '')
+        json_path = os.path.abspath(f'json/{name}.json')
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(dct, f, ensure_ascii=False, indent=4)
+        print(f"JSON已保存到{json_path}")
+        print('所有流程全部运行完成！')
+        print(f'程序总耗时: {round(time.time() - start_time, 2)}秒')
+        return dct
 
-    except FileNotFoundError:
-        print(f"错误：文件 {filename} 不存在于 {UPLOAD_DIR}")
-        raise
     except requests.exceptions.RequestException as e:
         print(f"网络请求失败: {e}")
         raise
@@ -325,9 +332,19 @@ def process_pdf_file(filename, sampleid, cancer):
 
 
 if __name__ == '__main__':
-    filename = '未命名1_加水印.pdf'  #
-    sampleid = 'S2600015708'   # S2600015708
-    cancer = "肠癌"
+    # 从命令行读取参数
+    # 用法: python script.py <OBS_OBJECT_KEY> <sampleid> <cancer>
+    # 示例: python script.py "yananai/2026-08/6012340402-陈金根-2026-08-04 16_45_03 (3).pdf" "S2600015708" "肠癌"
+
+    if len(sys.argv) < 4:
+        print("用法: python OncoGene_PDFAnalyzer.py <OBS_OBJECT_KEY> <sampleid> <cancer>")
+        print(
+            "示例: python OncoGene_PDFAnalyzer.py \"yananai/2026-08/6012340402-陈金根-2026-08-04 16_45_03 (3).pdf\" \"S2600015708\" \"肠癌\"")
+        sys.exit(1)
+
+    OBS_OBJECT_KEY = sys.argv[1]
+    sampleid = sys.argv[2]
+    cancer = sys.argv[3]
     # 处理PDF
-    result = process_pdf_file(filename, sampleid, cancer)
+    result = process_pdf_file(OBS_OBJECT_KEY, sampleid, cancer)
     print(f"最终结果: {result}")

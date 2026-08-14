@@ -594,7 +594,7 @@ def generate_report(filename):
 
 
 if __name__ == '__main__':
-    pdf_file = 'BRCA1+BRCA2基因检测（卵巢癌）.pdf'
+    pdf_file = '伊立替康用药评估（肠癌）.pdf'
     report_text, structured_result = generate_report(pdf_file)
     print(report_text)
     print(structured_result)

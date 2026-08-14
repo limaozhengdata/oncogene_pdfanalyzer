@@ -10,9 +10,9 @@ from OncoReport_Generator import generate_report
 from OncoGene_PDFAnalyzer import process_pdf_file
 
 if __name__ == '__main__':
-    filename = '未命名1_加水印.pdf'  #
+    filename = 'BRCA1+BRCA2基因检测（乳腺癌）.pdf'  #
     sampleid = 'S2600015708'  # S2600015708
-    cancer = "肠癌"
+    cancer = "胃癌"
     # 处理PDF
     result = process_pdf_file(filename, sampleid, cancer)
     print(f"最终结果: {result}")

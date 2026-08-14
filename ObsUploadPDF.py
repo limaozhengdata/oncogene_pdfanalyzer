@@ -134,7 +134,7 @@ def fetch_temp_access_key(huisuan_token):
     return data
 
 
-def upload_pdf(filename):
+def upload_pdf(OBS_OBJECT_KEY):
     if "请替换" in USER_NAME or "请替换" in PASSWORD:
         raise Exception("请先配置有效的 USER_NAME / PASSWORD")
 
@@ -142,7 +142,7 @@ def upload_pdf(filename):
         raise Exception("请先配置 OBS_OBJECT_KEY，例如 yananai/2026-08/xxx.pdf")
 
     object_key = normalize_object_key(OBS_OBJECT_KEY)
-
+    filename = OBS_OBJECT_KEY.split('/')[-1]
     # 1. 登录拿 huisuan-token
     token = login_and_get_token()
     print("登录成功，已拿到 token")
@@ -193,4 +193,4 @@ def upload_pdf(filename):
 
 
 if __name__ == "__main__":
-    upload_pdf('1.pdf')
+    upload_pdf('yananai/2026-08/6012340402-陈金根-2026-08-04 16_45_03 (3).pdf')
